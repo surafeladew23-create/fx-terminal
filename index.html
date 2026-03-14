@@ -3,128 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FX Terminal | Pro Export V8</title>
+    <title>FX Dashboard | Elite Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --bg: #0d1117; --green: #238636; --red: #da3633; --text: #c9d1d9; --border: #30363d; --accent: #58a6ff; }
-        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 10px; margin: 0; }
-        .container { max-width: 100%; margin: 0 auto; border: 1px solid var(--border); padding: 15px; border-radius: 8px; box-sizing: border-box; background: var(--bg); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background: #161b22; border: 2px solid var(--red); padding: 20px; width: 85%; border-radius: 8px; }
-        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--green); font-size: 1.1rem; margin-top: 0; }
-        .section { margin-bottom: 15px; border: 1px solid var(--border); padding: 12px; border-radius: 4px; }
-        input, select, textarea { background: #161b22; border: 1px solid var(--border); color: white; padding: 10px; width: 100%; margin: 5px 0 10px 0; box-sizing: border-box; border-radius: 4px; }
-        .btn { background: var(--green); color: white; border: none; padding: 15px; cursor: pointer; width: 100%; font-weight: bold; border-radius: 4px; margin-bottom: 8px; }
-        .trade-card { background: #161b22; border-left: 4px solid var(--border); padding: 10px; margin-top: 8px; font-size: 0.75rem; }
+        :root { 
+            --bg: #05070a; --card: #0f1117; --accent: #0260FD; 
+            --green: #00c805; --red: #ff3b30; --text: #f0f6fc; --dim: #8b949e; 
+        }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            padding: 15px; margin: 0; 
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: -1px; }
+        
+        /* Dashboard Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #1c2128; }
+        .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; }
+
+        .main-card { background: var(--card); border-radius: 16px; border: 1px solid #1c2128; padding: 20px; margin-bottom: 20px; }
+        h3 { font-size: 0.9rem; margin-top: 0; color: var(--text); }
+
+        input, select, textarea { 
+            background: #05070a; border: 1px solid #30363d; color: white; 
+            padding: 12px; width: 100%; margin: 8px 0; border-radius: 8px; font-size: 0.9rem;
+        }
+        input:focus { border-color: var(--accent); outline: none; }
+
+        .btn-primary { 
+            background: var(--accent); color: white; border: none; 
+            padding: 14px; width: 100%; font-weight: 700; border-radius: 8px; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-secondary { background: #1c2128; color: var(--dim); border: none; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-top: 10px; width: 100%; }
+
+        /* History Items */
+        .history-item { 
+            background: #161b22; padding: 15px; border-radius: 10px; 
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .pnl-tag { font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
+        .win { background: rgba(0, 200, 5, 0.1); color: var(--green); }
+        .loss { background: rgba(255, 59, 48, 0.1); color: var(--red); }
+        
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
+        .modal { background: var(--card); border: 1px solid var(--accent); padding: 25px; width: 80%; border-radius: 20px; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="overlay" id="disciplineOverlay">
+<div class="overlay" id="ruleModal">
     <div class="modal">
-        <h2 style="color:var(--red)">[!] RULES_CHECK</h2>
-        <div style="font-size: 0.8rem; line-height: 1.6; margin-bottom: 15px;">
-            - MSS Confirmed?<br>
-            - S/D Zone Presence?<br>
-            - Risk Managed (1-2% Max)?
+        <div style="font-size: 2rem; margin-bottom: 10px;">📊</div>
+        <h2 style="margin:0 0 10px 0; font-size: 1.1rem;">Ready to execute?</h2>
+        <p style="color:var(--dim); font-size: 0.85rem; line-height: 1.5;">Ensure MSS is confirmed on 1H and you are trading within your S/D zones.</p>
+        <button class="btn-primary" onclick="document.getElementById('ruleModal').style.display='none'">START SESSION</button>
+    </div>
+</div>
+
+<div id="capture">
+    <div class="header">
+        <div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_CLONE</span></div>
+        <div style="font-size: 0.7rem; color: var(--dim);" id="currentDate"></div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Equity</div>
+            <div class="stat-value" id="totalPnl">$0.00</div>
         </div>
-        <button class="btn" style="background: var(--red);" onclick="document.getElementById('disciplineOverlay').style.display='none'">I ACCEPT</button>
-    </div>
-</div>
-
-<div class="container" id="screenshotArea">
-    <h2>[ FX_PRO_TERMINAL_V8 ]</h2>
-    
-    <div class="section">
-        <h3>Live Stats</h3>
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-            <div>LON: <span id="stat-london" style="color:white;">$0</span></div>
-            <div>NY: <span id="stat-ny" style="color:white;">$0</span></div>
-            <div>ASIA: <span id="stat-asia" style="color:white;">$0</span></div>
+        <div class="stat-card">
+            <div class="stat-label">Win Rate</div>
+            <div class="stat-value" id="winRate">0%</div>
         </div>
     </div>
 
-    <div class="section">
-        <h3>New Trade</h3>
-        <select id="session">
-            <option value="london">London</option>
-            <option value="ny">New York</option>
-            <option value="asia">Asia</option>
-        </select>
-        <input type="number" id="pnl" placeholder="Profit/Loss ($)">
-        <textarea id="notes" rows="2" placeholder="Journal notes..."></textarea>
-        <button class="btn" onclick="addTrade()">EXECUTE & LOG</button>
+    <div class="main-card">
+        <h3>Log New Execution</h3>
+        <div style="display: flex; gap: 8px;">
+            <select id="session" style="flex:1;"><option value="london">London</option><option value="ny">New York</option></select>
+            <input type="number" id="amount" placeholder="P/L ($)" style="flex:1;">
+        </div>
+        <textarea id="note" rows="2" placeholder="Describe the setup..."></textarea>
+        <button class="btn-primary" onclick="addTrade()">COMMIT TRADE</button>
     </div>
 
-    <div id="historyList"></div>
+    <h3 style="padding-left: 5px;">Performance History</h3>
+    <div id="history"></div>
 </div>
 
-<div style="padding: 10px;">
-    <button class="btn" style="background: var(--accent);" onclick="exportToCSV()">📊 DOWNLOAD TRADING LOG (CSV)</button>
-    <button class="btn" style="background: #30363d;" onclick="clearHistory()">WIPE DATA</button>
-</div>
+<button class="btn-secondary" onclick="exportCSV()">EXPORT CSV DATA</button>
+<button class="btn-secondary" style="color: var(--red);" onclick="resetData()">RESET ALL DATA</button>
 
 <script>
-    let trades = JSON.parse(localStorage.getItem('fx_trades_v8')) || [];
+    let trades = JSON.parse(localStorage.getItem('fx_v9')) || [];
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
 
     function addTrade() {
-        const pnl = parseFloat(document.getElementById('pnl').value);
-        if(isNaN(pnl)) return alert("Enter P/L");
-
+        const val = parseFloat(document.getElementById('amount').value);
+        if(isNaN(val)) return;
         trades.push({
-            date: new Date().toLocaleDateString(),
+            pnl: val,
             session: document.getElementById('session').value,
-            pnl: pnl,
-            notes: document.getElementById('notes').value || "N/A"
+            note: document.getElementById('note').value || "No context provided",
+            date: new Date().toLocaleDateString()
         });
-
-        localStorage.setItem('fx_trades_v8', JSON.stringify(trades));
-        document.getElementById('pnl').value = "";
-        document.getElementById('notes').value = "";
-        updateUI();
+        localStorage.setItem('fx_v9', JSON.stringify(trades));
+        document.getElementById('amount').value = "";
+        document.getElementById('note').value = "";
+        update();
     }
 
-    function updateUI() {
-        const sessions = { london: 0, ny: 0, asia: 0 };
-        trades.forEach(t => sessions[t.session] += t.pnl);
+    function update() {
+        const total = trades.reduce((a, b) => a + b.pnl, 0);
+        const wins = trades.filter(t => t.pnl > 0).length;
+        const wr = trades.length > 0 ? ((wins / trades.length) * 100).toFixed(0) : 0;
 
-        document.getElementById('stat-london').innerText = `$${sessions.london.toFixed(2)}`;
-        document.getElementById('stat-ny').innerText = `$${sessions.ny.toFixed(2)}`;
-        document.getElementById('stat-asia').innerText = `$${sessions.asia.toFixed(2)}`;
+        document.getElementById('totalPnl').innerText = `$${total.toFixed(2)}`;
+        document.getElementById('totalPnl').style.color = total >= 0 ? 'var(--green)' : 'var(--red)';
+        document.getElementById('winRate').innerText = `${wr}%`;
 
-        document.getElementById('historyList').innerHTML = trades.slice().reverse().map(t => `
-            <div class="trade-card" style="border-left-color: ${t.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">
-                <strong>${t.date} | ${t.pnl >= 0 ? '+' : ''}$${t.pnl}</strong> (${t.session.toUpperCase()})<br>
-                <span style="color:#8b949e italic;">"${t.notes}"</span>
+        document.getElementById('history').innerHTML = trades.slice().reverse().map(t => `
+            <div class="history-item">
+                <div>
+                    <div style="font-size: 0.85rem; font-weight: 600;">${t.session.toUpperCase()} SESSION</div>
+                    <div style="font-size: 0.7rem; color: var(--dim);">${t.note}</div>
+                </div>
+                <div class="pnl-tag ${t.pnl >= 0 ? 'win' : 'loss'}">
+                    ${t.pnl >= 0 ? '+' : ''}${t.pnl}
+                </div>
             </div>
         `).join('');
     }
 
-    function exportToCSV() {
-        if(trades.length === 0) return alert("No trades to export!");
-        
-        let csvContent = "data:text/csv;charset=utf-8,Date,Session,Profit/Loss,Notes\n";
-        trades.forEach(t => {
-            csvContent += `${t.date},${t.session},${t.pnl},"${t.notes}"\n`;
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `FX_Journal_${new Date().toLocaleDateString()}.csv`);
-        document.body.appendChild(link);
-        link.click();
+    function exportCSV() {
+        let csv = "Date,Session,PnL,Notes\n";
+        trades.forEach(t => csv += `${t.date},${t.session},${t.pnl},"${t.note}"\n`);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', 'journal_export.csv');
+        a.click();
     }
 
-    function clearHistory() {
-        if(confirm("Confirm: Delete all journal entries?")) {
-            localStorage.removeItem('fx_trades_v8');
-            trades = [];
-            updateUI();
-        }
-    }
-
-    updateUI();
+    function resetData() { if(confirm("Delete all history?")) { localStorage.removeItem('fx_v9'); trades=[]; update(); } }
+    update();
 </script>
 </body>
 </html>
