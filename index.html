@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FX Dashboard | Pro Analytics</title>
+    <title>FX Dashboard | Vision Elite</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { 
             --bg: #05070a; --card: #0f1117; --accent: #0260FD; 
@@ -13,182 +12,175 @@
         }
         body { 
             background: var(--bg); color: var(--text); 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            padding: 15px; margin: 0; 
+            font-family: -apple-system, sans-serif; padding: 15px; margin: 0; 
         }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logo { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: -1px; }
+        .logo { color: var(--accent); font-weight: 800; font-size: 1.2rem; }
         
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #1c2128; }
-        .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 600; }
-        .stat-value { font-size: 1.2rem; font-weight: 700; margin-top: 5px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+        .stat-card { background: var(--card); padding: 12px; border-radius: 12px; border: 1px solid #1c2128; text-align: center; }
+        .stat-label { font-size: 0.6rem; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+        .stat-value { font-size: 1rem; font-weight: 700; margin-top: 5px; }
 
         .main-card { background: var(--card); border-radius: 16px; border: 1px solid #1c2128; padding: 20px; margin-bottom: 20px; }
-        h3 { font-size: 0.9rem; margin-top: 0; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
+        h3 { font-size: 0.8rem; margin: 0 0 10px 0; color: var(--text); text-transform: uppercase; }
 
-        /* Fix for Loss Input */
         input, select, textarea { 
             background: #05070a; border: 1px solid #30363d; color: white; 
             padding: 12px; width: 100%; margin: 8px 0; border-radius: 8px; font-size: 1rem;
+        }
+
+        .file-input-label {
+            display: block; background: #1c2128; color: var(--accent); text-align: center;
+            padding: 12px; border-radius: 8px; border: 1px dashed var(--accent);
+            margin: 8px 0; font-size: 0.8rem; font-weight: 600; cursor: pointer;
         }
 
         .btn-primary { 
             background: var(--accent); color: white; border: none; 
             padding: 14px; width: 100%; font-weight: 700; border-radius: 8px; cursor: pointer;
         }
-        .btn-ghost { background: transparent; color: var(--dim); border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-top: 10px; width: 100%; cursor: pointer; }
 
         .history-item { 
-            background: #161b22; padding: 12px; border-radius: 10px; 
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+            background: #161b22; padding: 15px; border-radius: 12px; 
+            margin-bottom: 12px; border: 1px solid #1c2128;
         }
-        .pnl-tag { font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
+        .trade-meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .trade-img { width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #30363d; cursor: zoom-in; }
+        .pnl-tag { font-weight: 700; font-size: 0.9rem; }
         .win { color: var(--green); }
         .loss { color: var(--red); }
 
-        canvas { max-width: 100%; margin-top: 10px; }
+        /* Full Screen Zoom Overlay */
+        #zoomOverlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 9999; justify-content: center; align-items: center; cursor: zoom-out;
+        }
+        #zoomImg { max-width: 95%; max-height: 95%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
-<div id="captureArea" style="background: var(--bg); padding: 5px;">
-    <div class="header">
-        <div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_PRO</span></div>
-        <div style="font-size: 0.7rem; color: var(--dim);" id="dateDisplay"></div>
-    </div>
-
-    <div class="main-card">
-        <h3>Equity Curve</h3>
-        <canvas id="equityChart" height="150"></canvas>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-label">Net Profit</div>
-            <div class="stat-value" id="totalPnl">$0.00</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Win Rate</div>
-            <div class="stat-value" id="winRate">0%</div>
-        </div>
-    </div>
-
-    <div class="main-card">
-        <h3>New Execution</h3>
-        <div style="display: flex; gap: 8px;">
-            <select id="session" style="flex:1;"><option value="london">London</option><option value="ny">New York</option></select>
-            <input type="text" id="amount" placeholder="P/L (e.g. 50 or -20)" style="flex:1;">
-        </div>
-        <textarea id="note" rows="2" placeholder="Market context..."></textarea>
-        <button class="btn-primary" onclick="addTrade()">COMMIT TRADE</button>
-    </div>
-
-    <h3 style="padding-left: 5px;">History</h3>
-    <div id="history"></div>
+<div id="zoomOverlay" onclick="this.style.display='none'">
+    <img id="zoomImg" src="">
 </div>
 
-<div style="padding-bottom: 30px;">
-    <button class="btn-ghost" onclick="takeScreenshot()">📸 SAVE DASHBOARD AS IMAGE</button>
-    <button class="btn-ghost" onclick="resetData()">WIPE ALL DATA</button>
+<div class="header">
+    <div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_VISION_V13</span></div>
+    <div style="font-size: 0.7rem; color: var(--dim);" id="dateDisplay"></div>
 </div>
+
+<div class="main-card">
+    <h3>Equity Curve</h3>
+    <canvas id="equityChart" height="120"></canvas>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">P/L</div><div class="stat-value" id="totalPnl">$0</div></div>
+    <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="winRate">0%</div></div>
+    <div class="stat-card"><div class="stat-label">Avg R:R</div><div class="stat-value" id="avgRR">0.0</div></div>
+</div>
+
+<div class="main-card">
+    <h3>New Entry</h3>
+    <div style="display: flex; gap: 8px;">
+        <input type="text" id="amount" placeholder="P/L ($)" style="flex:1;">
+        <input type="number" id="rrValue" step="0.1" placeholder="R:R" style="flex:1;">
+    </div>
+    
+    <label class="file-input-label" for="chartFile" id="fileLabel">+ ATTACH SETUP IMAGE</label>
+    <input type="file" id="chartFile" accept="image/*" style="display:none;" onchange="handleFile(this)">
+    
+    <textarea id="note" rows="2" placeholder="Context (e.g. 1H MSS at Supply)"></textarea>
+    <button class="btn-primary" onclick="addTrade()">COMMIT EXECUTION</button>
+</div>
+
+<h3 style="padding-left: 5px;">Visual History</h3>
+<div id="history"></div>
+
+<button onclick="clearHistory()" style="background:transparent; border:none; color:#333; width:100%; padding:20px; font-size:0.7rem;">WIPE LOCAL CACHE</button>
 
 <script>
-    let trades = JSON.parse(localStorage.getItem('fx_v10')) || [];
+    let trades = JSON.parse(localStorage.getItem('fx_v13')) || [];
+    let currentImageBase64 = "";
     let chart;
+
+    function handleFile(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            currentImageBase64 = reader.result;
+            document.getElementById('fileLabel').innerText = "✅ ATTACHED";
+            document.getElementById('fileLabel').style.borderColor = "var(--green)";
+        };
+        if (file) reader.readAsDataURL(file);
+    }
 
     function initChart() {
         const ctx = document.getElementById('equityChart').getContext('2d');
         chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Start', ...trades.map((_, i) => i + 1)],
+                labels: ['0', ...trades.map((_, i) => (i + 1).toString())],
                 datasets: [{
-                    label: 'Equity',
                     data: [0, ...getEquityData()],
-                    borderColor: '#0260FD',
-                    borderWidth: 3,
-                    tension: 0.3,
-                    fill: true,
-                    backgroundColor: 'rgba(2, 96, 253, 0.1)',
-                    pointRadius: 0
+                    borderColor: '#0260FD', borderWidth: 2, tension: 0.4, fill: true,
+                    backgroundColor: 'rgba(2, 96, 253, 0.05)', pointRadius: 2
                 }]
             },
-            options: {
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { display: false },
-                    y: { grid: { color: '#1c2128' }, ticks: { color: '#8b949e', font: { size: 10 } } }
-                }
-            }
+            options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#8b949e' } } } }
         });
     }
 
     function getEquityData() {
-        let runningTotal = 0;
-        return trades.map(t => {
-            runningTotal += t.pnl;
-            return runningTotal;
-        });
+        let total = 0;
+        return trades.map(t => { total += t.pnl; return total; });
+    }
+
+    function zoom(src) {
+        document.getElementById('zoomImg').src = src;
+        document.getElementById('zoomOverlay').style.display = 'flex';
     }
 
     function addTrade() {
-        const val = parseFloat(document.getElementById('amount').value.replace(/[^0-9.-]/g, ''));
-        if(isNaN(val)) return alert("Please enter a valid number (use - for losses)");
+        const pnlStr = document.getElementById('amount').value.replace(/[^0-9.-]/g, '');
+        const pnl = parseFloat(pnlStr);
+        if(isNaN(pnl)) return alert("Enter valid P/L");
         
         trades.push({
-            pnl: val,
-            session: document.getElementById('session').value,
-            note: document.getElementById('note').value || "No notes",
+            pnl: pnl,
+            rr: document.getElementById('rrValue').value || "0",
+            note: document.getElementById('note').value || "N/A",
+            img: currentImageBase64,
             date: new Date().toLocaleDateString()
         });
         
-        localStorage.setItem('fx_v10', JSON.stringify(trades));
-        document.getElementById('amount').value = "";
-        document.getElementById('note').value = "";
-        update();
+        localStorage.setItem('fx_v13', JSON.stringify(trades));
+        location.reload(); // Refresh to clear state and update chart
     }
 
     function update() {
         const total = trades.reduce((a, b) => a + b.pnl, 0);
         const wins = trades.filter(t => t.pnl > 0).length;
-        const wr = trades.length > 0 ? ((wins / trades.length) * 100).toFixed(0) : 0;
-
-        document.getElementById('totalPnl').innerText = `$${total.toFixed(2)}`;
-        document.getElementById('totalPnl').style.color = total >= 0 ? 'var(--green)' : 'var(--red)';
-        document.getElementById('winRate').innerText = `${wr}%`;
+        document.getElementById('totalPnl').innerText = `$${total.toFixed(0)}`;
+        document.getElementById('winRate').innerText = `${trades.length > 0 ? ((wins/trades.length)*100).toFixed(0) : 0}%`;
         document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString();
 
         document.getElementById('history').innerHTML = trades.slice().reverse().map(t => `
             <div class="history-item">
-                <div>
-                    <div style="font-size: 0.8rem; font-weight: 600;">${t.session.toUpperCase()}</div>
-                    <div style="font-size: 0.65rem; color: var(--dim);">${t.note}</div>
+                <div class="trade-meta">
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 700;">${t.date} <span style="color:var(--dim); font-weight:400;">(R:R 1:${t.rr})</span></div>
+                        <div style="font-size: 0.75rem; color: var(--dim); margin-top:4px;">${t.note}</div>
+                    </div>
+                    <div class="pnl-tag ${t.pnl >= 0 ? 'win' : 'loss'}">${t.pnl >= 0 ? '+' : ''}${t.pnl}</div>
                 </div>
-                <div class="pnl-tag ${t.pnl >= 0 ? 'win' : 'loss'}">
-                    ${t.pnl >= 0 ? '+' : ''}${t.pnl}
-                </div>
+                ${t.img ? `<img src="${t.img}" class="trade-img" onclick="zoom(this.src)">` : ''}
             </div>
         `).join('');
-
-        if(chart) {
-            chart.data.labels = ['Start', ...trades.map((_, i) => i + 1)];
-            chart.data.datasets[0].data = [0, ...getEquityData()];
-            chart.update();
-        }
     }
 
-    function takeScreenshot() {
-        const area = document.getElementById('captureArea');
-        html2canvas(area, { backgroundColor: "#05070a" }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `FX_Report_${new Date().getTime()}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-        });
-    }
-
-    function resetData() { if(confirm("Clear all data?")) { localStorage.removeItem('fx_v10'); trades=[]; update(); } }
+    function clearHistory() { if(confirm("Erase all?")) { localStorage.removeItem('fx_v13'); location.reload(); } }
 
     initChart();
     update();
