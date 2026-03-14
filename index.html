@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FX Dashboard | Elite Edition</title>
+    <title>FX Dashboard | Pro Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { 
@@ -18,61 +19,53 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .logo { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: -1px; }
         
-        /* Dashboard Stats Grid */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .stat-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #1c2128; }
-        .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 600; margin-bottom: 5px; }
-        .stat-value { font-size: 1.2rem; font-weight: 700; }
+        .stat-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; font-weight: 600; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; margin-top: 5px; }
 
         .main-card { background: var(--card); border-radius: 16px; border: 1px solid #1c2128; padding: 20px; margin-bottom: 20px; }
-        h3 { font-size: 0.9rem; margin-top: 0; color: var(--text); }
+        h3 { font-size: 0.9rem; margin-top: 0; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
 
+        /* Fix for Loss Input */
         input, select, textarea { 
             background: #05070a; border: 1px solid #30363d; color: white; 
-            padding: 12px; width: 100%; margin: 8px 0; border-radius: 8px; font-size: 0.9rem;
+            padding: 12px; width: 100%; margin: 8px 0; border-radius: 8px; font-size: 1rem;
         }
-        input:focus { border-color: var(--accent); outline: none; }
 
         .btn-primary { 
             background: var(--accent); color: white; border: none; 
             padding: 14px; width: 100%; font-weight: 700; border-radius: 8px; cursor: pointer;
-            transition: opacity 0.2s;
         }
-        .btn-secondary { background: #1c2128; color: var(--dim); border: none; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-top: 10px; width: 100%; }
+        .btn-ghost { background: transparent; color: var(--dim); border: 1px solid #30363d; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-top: 10px; width: 100%; cursor: pointer; }
 
-        /* History Items */
         .history-item { 
-            background: #161b22; padding: 15px; border-radius: 10px; 
-            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+            background: #161b22; padding: 12px; border-radius: 10px; 
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
         }
         .pnl-tag { font-weight: 700; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
-        .win { background: rgba(0, 200, 5, 0.1); color: var(--green); }
-        .loss { background: rgba(255, 59, 48, 0.1); color: var(--red); }
-        
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
-        .modal { background: var(--card); border: 1px solid var(--accent); padding: 25px; width: 80%; border-radius: 20px; text-align: center; }
+        .win { color: var(--green); }
+        .loss { color: var(--red); }
+
+        canvas { max-width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="overlay" id="ruleModal">
-    <div class="modal">
-        <div style="font-size: 2rem; margin-bottom: 10px;">📊</div>
-        <h2 style="margin:0 0 10px 0; font-size: 1.1rem;">Ready to execute?</h2>
-        <p style="color:var(--dim); font-size: 0.85rem; line-height: 1.5;">Ensure MSS is confirmed on 1H and you are trading within your S/D zones.</p>
-        <button class="btn-primary" onclick="document.getElementById('ruleModal').style.display='none'">START SESSION</button>
-    </div>
-</div>
-
-<div id="capture">
+<div id="captureArea" style="background: var(--bg); padding: 5px;">
     <div class="header">
-        <div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_CLONE</span></div>
-        <div style="font-size: 0.7rem; color: var(--dim);" id="currentDate"></div>
+        <div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_PRO</span></div>
+        <div style="font-size: 0.7rem; color: var(--dim);" id="dateDisplay"></div>
+    </div>
+
+    <div class="main-card">
+        <h3>Equity Curve</h3>
+        <canvas id="equityChart" height="150"></canvas>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-label">Total Equity</div>
+            <div class="stat-label">Net Profit</div>
             <div class="stat-value" id="totalPnl">$0.00</div>
         </div>
         <div class="stat-card">
@@ -82,36 +75,75 @@
     </div>
 
     <div class="main-card">
-        <h3>Log New Execution</h3>
+        <h3>New Execution</h3>
         <div style="display: flex; gap: 8px;">
             <select id="session" style="flex:1;"><option value="london">London</option><option value="ny">New York</option></select>
-            <input type="number" id="amount" placeholder="P/L ($)" style="flex:1;">
+            <input type="text" id="amount" placeholder="P/L (e.g. 50 or -20)" style="flex:1;">
         </div>
-        <textarea id="note" rows="2" placeholder="Describe the setup..."></textarea>
+        <textarea id="note" rows="2" placeholder="Market context..."></textarea>
         <button class="btn-primary" onclick="addTrade()">COMMIT TRADE</button>
     </div>
 
-    <h3 style="padding-left: 5px;">Performance History</h3>
+    <h3 style="padding-left: 5px;">History</h3>
     <div id="history"></div>
 </div>
 
-<button class="btn-secondary" onclick="exportCSV()">EXPORT CSV DATA</button>
-<button class="btn-secondary" style="color: var(--red);" onclick="resetData()">RESET ALL DATA</button>
+<div style="padding-bottom: 30px;">
+    <button class="btn-ghost" onclick="takeScreenshot()">📸 SAVE DASHBOARD AS IMAGE</button>
+    <button class="btn-ghost" onclick="resetData()">WIPE ALL DATA</button>
+</div>
 
 <script>
-    let trades = JSON.parse(localStorage.getItem('fx_v9')) || [];
-    document.getElementById('currentDate').innerText = new Date().toLocaleDateString();
+    let trades = JSON.parse(localStorage.getItem('fx_v10')) || [];
+    let chart;
+
+    function initChart() {
+        const ctx = document.getElementById('equityChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Start', ...trades.map((_, i) => i + 1)],
+                datasets: [{
+                    label: 'Equity',
+                    data: [0, ...getEquityData()],
+                    borderColor: '#0260FD',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    backgroundColor: 'rgba(2, 96, 253, 0.1)',
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { display: false },
+                    y: { grid: { color: '#1c2128' }, ticks: { color: '#8b949e', font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    function getEquityData() {
+        let runningTotal = 0;
+        return trades.map(t => {
+            runningTotal += t.pnl;
+            return runningTotal;
+        });
+    }
 
     function addTrade() {
-        const val = parseFloat(document.getElementById('amount').value);
-        if(isNaN(val)) return;
+        const val = parseFloat(document.getElementById('amount').value.replace(/[^0-9.-]/g, ''));
+        if(isNaN(val)) return alert("Please enter a valid number (use - for losses)");
+        
         trades.push({
             pnl: val,
             session: document.getElementById('session').value,
-            note: document.getElementById('note').value || "No context provided",
+            note: document.getElementById('note').value || "No notes",
             date: new Date().toLocaleDateString()
         });
-        localStorage.setItem('fx_v9', JSON.stringify(trades));
+        
+        localStorage.setItem('fx_v10', JSON.stringify(trades));
         document.getElementById('amount').value = "";
         document.getElementById('note').value = "";
         update();
@@ -125,32 +157,40 @@
         document.getElementById('totalPnl').innerText = `$${total.toFixed(2)}`;
         document.getElementById('totalPnl').style.color = total >= 0 ? 'var(--green)' : 'var(--red)';
         document.getElementById('winRate').innerText = `${wr}%`;
+        document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString();
 
         document.getElementById('history').innerHTML = trades.slice().reverse().map(t => `
             <div class="history-item">
                 <div>
-                    <div style="font-size: 0.85rem; font-weight: 600;">${t.session.toUpperCase()} SESSION</div>
-                    <div style="font-size: 0.7rem; color: var(--dim);">${t.note}</div>
+                    <div style="font-size: 0.8rem; font-weight: 600;">${t.session.toUpperCase()}</div>
+                    <div style="font-size: 0.65rem; color: var(--dim);">${t.note}</div>
                 </div>
                 <div class="pnl-tag ${t.pnl >= 0 ? 'win' : 'loss'}">
                     ${t.pnl >= 0 ? '+' : ''}${t.pnl}
                 </div>
             </div>
         `).join('');
+
+        if(chart) {
+            chart.data.labels = ['Start', ...trades.map((_, i) => i + 1)];
+            chart.data.datasets[0].data = [0, ...getEquityData()];
+            chart.update();
+        }
     }
 
-    function exportCSV() {
-        let csv = "Date,Session,PnL,Notes\n";
-        trades.forEach(t => csv += `${t.date},${t.session},${t.pnl},"${t.note}"\n`);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', 'journal_export.csv');
-        a.click();
+    function takeScreenshot() {
+        const area = document.getElementById('captureArea');
+        html2canvas(area, { backgroundColor: "#05070a" }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `FX_Report_${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        });
     }
 
-    function resetData() { if(confirm("Delete all history?")) { localStorage.removeItem('fx_v9'); trades=[]; update(); } }
+    function resetData() { if(confirm("Clear all data?")) { localStorage.removeItem('fx_v10'); trades=[]; update(); } }
+
+    initChart();
     update();
 </script>
 </body>
