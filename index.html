@@ -3,195 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FX Dashboard | Analytics V17</title>
+    <title>FX Dashboard | V20 Calendar</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
             --bg: #05070a; --card: #0f1117; --accent: #0260FD; 
-            --green: #00c805; --red: #ff3b30; --text: #f0f6fc; --dim: #8b949e; --gold: #ffd700;
+            --green: #00c805; --red: #ff3b30; --text: #f0f6fc; --dim: #8b949e; 
         }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 0; margin: 0; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 15px; margin: 0; padding-bottom: 50px; }
         
-        .news-ticker { background: #111; color: var(--gold); padding: 8px; font-size: 0.7rem; font-weight: bold; overflow: hidden; white-space: nowrap; border-bottom: 1px solid #222; }
-        .ticker-content { display: inline-block; animation: scroll 20s linear infinite; }
-        @keyframes scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
-
-        .container { padding: 15px; }
         .logo { color: var(--accent); font-weight: 800; font-size: 1.2rem; margin-bottom: 20px; display: block; }
-        
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); padding: 12px; border-radius: 12px; border: 1px solid #1c2128; text-align: center; }
-        .stat-label { font-size: 0.6rem; color: var(--dim); text-transform: uppercase; }
-        .stat-value { font-size: 1rem; font-weight: 700; margin-top: 5px; }
+        .main-card { background: var(--card); border-radius: 16px; border: 1px solid #1c2128; padding: 15px; margin-bottom: 20px; }
+        h3 { font-size: 0.7rem; margin: 0 0 10px 0; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
 
-        .main-card { background: var(--card); border-radius: 16px; border: 1px solid #1c2128; padding: 20px; margin-bottom: 20px; }
-        h3 { font-size: 0.75rem; margin: 0 0 12px 0; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
+        /* Calendar Styles */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .cal-day-label { font-size: 0.6rem; color: var(--dim); padding-bottom: 5px; }
+        .cal-cell { aspect-ratio: 1/1; background: #05070a; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; border: 1px solid #1c2128; position: relative; }
+        .cal-win { background: rgba(0, 200, 5, 0.2); border-color: var(--green); color: var(--green); font-weight: bold; }
+        .cal-loss { background: rgba(255, 59, 48, 0.2); border-color: var(--red); color: var(--red); font-weight: bold; }
 
-        /* Session Analytics Bars */
-        .analytics-row { margin-bottom: 15px; }
-        .bar-label { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 5px; color: var(--dim); }
-        .bar-bg { background: #1c2128; height: 8px; border-radius: 10px; overflow: hidden; }
-        .bar-fill { background: var(--accent); height: 100%; transition: width 0.5s ease; }
+        .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        input, select, textarea { background: #05070a; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; }
 
-        .session-toggle { display: flex; gap: 5px; margin-bottom: 10px; }
-        .session-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #30363d; background: #05070a; color: var(--dim); cursor: pointer; font-size: 0.8rem; font-weight: 600; }
-        .session-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .upload-zone { border: 1px dashed var(--accent); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; margin: 10px 0; font-size: 0.75rem; color: var(--accent); }
+        .preview-container { display: flex; gap: 5px; margin-top: 5px; }
+        .preview-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--accent); }
 
-        input, textarea { background: #05070a; border: 1px solid #30363d; color: white; padding: 12px; width: 100%; margin: 8px 0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 14px; width: 100%; font-weight: 700; border-radius: 8px; cursor: pointer; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; font-weight: 700; border-radius: 8px; cursor: pointer; }
+        .btn-export { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+        .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
 
         .history-item { background: #161b22; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #1c2128; }
-        .session-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: #30363d; color: white; margin-left: 5px; }
-        .trade-img { width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #30363d; }
+        .image-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
+        .gallery-img { width: 100%; border-radius: 4px; cursor: zoom-in; }
+
+        #zoomOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+        #zoomImg { max-width: 95%; max-height: 95%; }
     </style>
 </head>
 <body>
 
-<div class="news-ticker">
-    <div class="ticker-content">
-        🔴 HIGH IMPACT: [USD] Retail Sales • [GBP] CPI y/y • [EUR] ECB Press Conference • [USD] Unemployment Claims 🔴
+<div id="zoomOverlay" onclick="this.style.display='none'"><img id="zoomImg" src=""></div>
+
+<div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_V20_PRO</span></div>
+
+<div class="main-card">
+    <h3 id="calMonth">March 2026</h3>
+    <div class="calendar-grid" id="calendarGrid">
+        <div class="cal-day-label">S</div><div class="cal-day-label">M</div><div class="cal-day-label">T</div><div class="cal-day-label">W</div><div class="cal-day-label">T</div><div class="cal-day-label">F</div><div class="cal-day-label">S</div>
     </div>
 </div>
 
-<div class="container">
-    <div class="logo">FXREPLAY<span style="color:white; font-weight:400;">_MASTER_V17</span></div>
-
-    <div class="main-card">
-        <h3>Account Growth</h3>
-        <canvas id="equityChart" height="110"></canvas>
+<div class="main-card">
+    <h3>New Entry</h3>
+    <div class="form-row">
+        <select id="pair">
+            <option value="EUR/USD">EUR/USD</option>
+            <option value="GBP/USD">GBP/USD</option>
+            <option value="XAU/USD">GOLD</option>
+            <option value="USD/JPY">USD/JPY</option>
+        </select>
+        <select id="session" style="flex: 0.5;">
+            <option value="LDN">LDN</option>
+            <option value="NY">NY</option>
+        </select>
     </div>
-
-    <div class="main-card">
-        <h3>Session Win Rates</h3>
-        <div class="analytics-row">
-            <div class="bar-label"><span>London Session</span><span id="lonWR">0%</span></div>
-            <div class="bar-bg"><div class="bar-fill" id="lonBar" style="width: 0%"></div></div>
-        </div>
-        <div class="analytics-row">
-            <div class="bar-label"><span>New York Session</span><span id="nyWR">0%</span></div>
-            <div class="bar-bg"><div class="bar-fill" id="nyBar" style="width: 0%"></div></div>
-        </div>
+    <div class="form-row">
+        <input type="text" id="amount" placeholder="P/L ($)">
+        <input type="number" id="rrValue" step="0.1" placeholder="R:R">
     </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><div class="stat-label">Total P/L</div><div class="stat-value" id="totalPnl">$0</div></div>
-        <div class="stat-card"><div class="stat-label">Total Win %</div><div class="stat-value" id="winRate">0%</div></div>
-        <div class="stat-card"><div class="stat-label">Avg R:R</div><div class="stat-value" id="avgRR">0.0</div></div>
+    <div class="upload-zone" onclick="document.getElementById('multiFile').click()">
+        + ATTACH IMAGES (UP TO 3)
+        <input type="file" id="multiFile" accept="image/*" multiple style="display:none;" onchange="handleFiles(this)">
+        <div class="preview-container" id="previewContainer"></div>
     </div>
+    <textarea id="note" rows="2" placeholder="Describe the setup..."></textarea>
+    <button class="btn-primary" onclick="addTrade()">COMMIT EXECUTION</button>
+</div>
 
-    <div class="main-card">
-        <h3>Log Execution</h3>
-        <div class="session-toggle">
-            <button class="session-btn active" id="londonBtn" onclick="setSession('London')">LONDON</button>
-            <button class="session-btn" id="nyBtn" onclick="setSession('New York')">NEW YORK</button>
-        </div>
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="amount" placeholder="P/L ($)">
-            <input type="number" id="rrValue" step="0.1" placeholder="R:R">
-        </div>
-        <label style="display:block; background:#1c2128; color:var(--accent); text-align:center; padding:12px; border-radius:8px; border:1px dashed var(--accent); margin:8px 0; font-size:0.8rem; font-weight:600; cursor:pointer;" for="chartFile" id="fileLabel">+ ATTACH CHART</label>
-        <input type="file" id="chartFile" accept="image/*" style="display:none;" onchange="handleFile(this)">
-        <textarea id="note" rows="2" placeholder="Market structure details..."></textarea>
-        <button class="btn-primary" onclick="addTrade()">COMMIT EXECUTION</button>
-    </div>
+<div id="history"></div>
 
-    <div id="history"></div>
+<div class="main-card" style="border-color: #333; margin-top: 40px;">
+    <h3>Data Management</h3>
+    <button class="btn-export" onclick="exportData()">📂 EXPORT BACKUP (CSV)</button>
+    <button class="btn-danger" onclick="eraseData()">🧨 ERASE ALL RECORDS</button>
 </div>
 
 <script>
-    let trades = JSON.parse(localStorage.getItem('fx_v17')) || [];
-    let currentSession = "London";
-    let currentImageBase64 = "";
-    let chart;
+    let trades = JSON.parse(localStorage.getItem('fx_v20')) || [];
+    let tempImages = [];
 
-    function setSession(s) {
-        currentSession = s;
-        document.getElementById('londonBtn').classList.toggle('active', s === 'London');
-        document.getElementById('nyBtn').classList.toggle('active', s === 'New York');
-    }
-
-    function handleFile(input) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            currentImageBase64 = reader.result;
-            document.getElementById('fileLabel').innerText = "✅ IMAGE READY";
-        };
-        if (input.files[0]) reader.readAsDataURL(input.files[0]);
-    }
-
-    function initChart() {
-        const ctx = document.getElementById('equityChart').getContext('2d');
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['0', ...trades.map((_, i) => (i + 1).toString())],
-                datasets: [{
-                    data: [0, ...getEquityData()],
-                    borderColor: '#0260FD', borderWidth: 2, tension: 0.4, fill: true,
-                    backgroundColor: 'rgba(2, 96, 253, 0.05)', pointRadius: 2
-                }]
-            },
-            options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1c2128' }, ticks: { color: '#8b949e' } } } }
+    function handleFiles(input) {
+        const files = Array.from(input.files).slice(0, 3);
+        tempImages = [];
+        document.getElementById('previewContainer').innerHTML = "";
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                tempImages.push(e.target.result);
+                const img = document.createElement('img');
+                img.src = e.target.result; img.className = 'preview-thumb';
+                document.getElementById('previewContainer').appendChild(img);
+            };
+            reader.readAsDataURL(file);
         });
-    }
-
-    function getEquityData() {
-        let total = 0;
-        return trades.map(t => { total += t.pnl; return total; });
     }
 
     function addTrade() {
         const pnl = parseFloat(document.getElementById('amount').value.replace(/[^0-9.-]/g, ''));
-        if(isNaN(pnl)) return alert("Enter valid P/L");
+        if(isNaN(pnl)) return alert("Enter P/L");
         trades.push({
+            pair: document.getElementById('pair').value,
+            session: document.getElementById('session').value,
             pnl: pnl, rr: document.getElementById('rrValue').value || "0",
             note: document.getElementById('note').value || "N/A",
-            session: currentSession,
-            img: currentImageBase64, date: new Date().toLocaleDateString()
+            images: tempImages, date: new Date().toLocaleDateString()
         });
-        localStorage.setItem('fx_v17', JSON.stringify(trades));
+        localStorage.setItem('fx_v20', JSON.stringify(trades));
         location.reload();
     }
 
-    function calculateSessionWR(sessionName) {
-        const sessionTrades = trades.filter(t => t.session === sessionName);
-        if (sessionTrades.length === 0) return 0;
-        const wins = sessionTrades.filter(t => t.pnl > 0).length;
-        return ((wins / sessionTrades.length) * 100).toFixed(0);
+    function generateCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+        // Empty cells for first week
+        for (let i = 0; i < firstDay; i++) {
+            const empty = document.createElement('div');
+            grid.appendChild(empty);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            cell.innerText = d;
+
+            const dayString = new Date(now.getFullYear(), now.getMonth(), d).toLocaleDateString();
+            const dayTrades = trades.filter(t => t.date === dayString);
+
+            if (dayTrades.length > 0) {
+                const dayPnl = dayTrades.reduce((sum, t) => sum + t.pnl, 0);
+                cell.classList.add(dayPnl >= 0 ? 'cal-win' : 'cal-loss');
+            }
+            grid.appendChild(cell);
+        }
     }
 
-    function update() {
-        const total = trades.reduce((a, b) => a + b.pnl, 0);
-        const wins = trades.filter(t => t.pnl > 0).length;
-        const totalWR = trades.length > 0 ? ((wins/trades.length)*100).toFixed(0) : 0;
-        
-        document.getElementById('totalPnl').innerText = `$${total.toFixed(0)}`;
-        document.getElementById('winRate').innerText = `${totalWR}%`;
+    function exportData() {
+        let csv = "Date,Pair,PnL,RR,Note\n";
+        trades.forEach(t => csv += `${t.date},${t.pair},${t.pnl},${t.rr},"${t.note}"\n`);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+        a.download = 'FX_Journal_V20.csv'; a.click();
+    }
 
-        // Update Session Bars
-        const lonWR = calculateSessionWR('London');
-        const nyWR = calculateSessionWR('New York');
-        document.getElementById('lonWR').innerText = `${lonWR}%`;
-        document.getElementById('lonBar').style.width = `${lonWR}%`;
-        document.getElementById('nyWR').innerText = `${nyWR}%`;
-        document.getElementById('nyBar').style.width = `${nyWR}%`;
+    function eraseData() {
+        if(confirm("Wipe all trades?")) { localStorage.removeItem('fx_v20'); location.reload(); }
+    }
 
+    function zoom(src) { document.getElementById('zoomImg').src = src; document.getElementById('zoomOverlay').style.display = 'flex'; }
+
+    function updateHistory() {
         document.getElementById('history').innerHTML = trades.slice().reverse().map(t => `
             <div class="history-item">
-                <div class="trade-meta">
-                    <div>
-                        <div style="font-size: 0.85rem; font-weight: 700;">${t.date} <span class="session-tag">${t.session}</span></div>
-                        <div style="font-size: 0.75rem; color: var(--dim); margin-top:4px;">${t.note} (1:${t.rr})</div>
-                    </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <div><span style="color:var(--accent); font-weight:bold;">${t.pair}</span> <span style="font-size:0.7rem; color:var(--dim)">${t.date}</span></div>
                     <div style="font-weight:700; color:${t.pnl >= 0 ? 'var(--green)' : 'var(--red)'}">${t.pnl >= 0 ? '+' : ''}${t.pnl}</div>
                 </div>
-                ${t.img ? `<img src="${t.img}" class="trade-img">` : ''}
+                <div class="image-gallery">
+                    ${t.images.map(img => `<img src="${img}" class="gallery-img" onclick="zoom(this.src)">`).join('')}
+                </div>
             </div>
         `).join('');
     }
 
-    initChart();
-    update();
+    generateCalendar();
+    updateHistory();
 </script>
 </body>
 </html>
